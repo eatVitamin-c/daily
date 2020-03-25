@@ -1,0 +1,169 @@
+<!DOCTYPE html>
+<html>
+	<head>
+		<meta charset="utf-8">
+		<title>每日一文</title>
+		<script src="./myajax.js"></script>
+		<script src="./jquery-3.4.1.js"></script>
+		<style>
+			html{
+				width:100%;
+				height:100%;
+				
+			}
+			.lay{
+				width:50%;
+				height:100%;
+				margin:0 auto;
+				border:1px solid red;
+			}
+			.con{
+				padding:0 30px 0 30px;
+			}
+			.logo{
+				text-align: center;
+				font-size:3rem;
+				font-weight: bolder;
+				height:150px;
+			}
+			.aut{
+				display:flex;
+				
+			}
+			.btns{
+				display:flex;
+				justify-content: space-between;
+			}
+			#title{
+				text-align:center;
+				
+			}
+		</style>
+	</head>
+	<body>
+		<div class="lay">
+			<div class="logo">
+				<div>每日一文</div>
+			</div>
+			<div class="con">
+				<form action="#" id="submit">
+					<input type="text" name="date" placeholder="输入您想查找的日期如:20190203">
+					<input id="submit-btn" type="submit" value="跳转">
+				</form>
+				
+				<div class="btns">
+					<button id="prev">前一天</button>
+					<button id="next">后一天</button>
+				</div>
+				<button id="random">点击此处获取随机文章</button>
+				<div class="art">
+					<h4 id="time"></h4>
+					<h1 id="title"></h1>
+					<div class="aut">
+						<h4>作者：</h4>
+						<h4 id="author"></h4>
+					</div>
+					<div id="content"></div>
+				</div>
+			</div>
+		</div>
+		<script>
+			//当前时间 以及前一天和后一天
+			var currdate;
+			var prevdate;
+			var nextdate;
+
+			//1.当天
+			var today = " ";
+			var td = new Date();
+			today = "" + td.getFullYear() + add0(td.getMonth() + 1) + add0(td.getDate());
+			//console.log(today);
+			//参数
+			_.get("https://interface.meiriyiwen.com/article/today", {
+				dev: 1,
+				//回调函数 data 错误信息
+			}, function(d, e) {
+				createArticle(d.data.title, d.data.date.curr, d.data.author, d.data.content, d.data.date.prev, d.data.date.next);
+			})
+
+			//2.点击显示随机的文章
+			$("#random").click(function() {
+				_.get("https://interface.meiriyiwen.com/article/random", {
+					dev: 1
+				}, function(d, e) {
+					createArticle(d.data.title, d.data.date.curr, d.data.author, d.data.content, d.data.date.prev, d.data.date.next);
+				});
+			})
+			
+
+			//3.前一天和后一天
+			//前一天
+
+			//var prev = $("#prev");
+			$("#prev").click(function() {
+				requestArticleData(prevdate);
+			});
+			//后一天
+			$("#next").click(function() {
+				//如果 nextdate 大于today 数据已经是最新的了
+				if (parseInt(nextdate) <= parseInt(today)) {
+
+					requestArticleData(nextdate);
+				}
+			});
+
+			function requestArticleData(dt) {
+				_.get("https://interface.meiriyiwen.com/article/day", {
+					dev: 1,
+					date: dt
+				}, function(d, e) {
+					createArticle(d.data.title, d.data.date.curr, d.data.author, d.data.content, d.data.date.prev, d.data.date.next);
+				})
+			}
+			//4.特定的时间
+			
+			var submit = document.querySelector("#submit");
+			$("#submit-btn").click(function(e) {
+				//取消事件
+				e.preventDefault();
+				var res = _.formSerializeToJson(submit);
+				designated(res.date);
+				
+			});
+			
+			
+			function designated(submit) {
+			_.get("https://interface.meiriyiwen.com/article/day", {
+				dev: 1,
+				date:submit
+				
+			}, function(d, e) {
+				createArticle(d.data.title, d.data.date.curr, d.data.author, d.data.content, d.data.date.prev, d.data.date.next);
+			});
+			
+			}
+
+			//封装方法展示
+			//文章标题 日期 作者 文章内容 前一天日期 后一天日期
+			function createArticle(title, date, author, content, prev, next) {
+
+				if (document.querySelector("#artiContainer")) {
+					$("#artiContainer").remove();
+				}
+
+				$("#time").html(date);
+				$("#title").html(title);
+				$("#author").html(author);
+				$("#content").html(content);
+
+				currdate = date;
+				prevdate = prev;
+				nextdate = next;
+			}
+			//位数补零
+			function add0(n) {
+				return n < 10 ? "0" + n : n;
+			}
+		</script>
+	</body>
+</html>
